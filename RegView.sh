@@ -65,6 +65,7 @@ while IFS= read -r line; do
 			echo "-----------------" >$input_tty_number
 			echo "最后得到的结果：" >$input_tty_number
 			echo "-----------------" >$input_tty_number
+			grep -Po "$line_bak" "$file_path"
 		fi
 		rm -f $temp_file
 		exit 0
@@ -105,9 +106,11 @@ while IFS= read -r line; do
 		echo "----------------------------------------" >$out_tty_number
 		echo "$err_msg" >"$out_tty_number"
 		sed -E "s$i$line$i&${i}g" "$file_path" 2>&1 >$temp_file
-		echo "output:" >$result_tty_number
-		echo "----------------------------------------" >$result_tty_number
-		grep -Po "$line" "$file_path" 2>&1 >$result_tty_number
+		if [ -f "$poc_path" ]; then
+			echo "output:" >$result_tty_number
+			echo "----------------------------------------" >$result_tty_number
+			grep -Po "$line" "$file_path" 2>&1 >$result_tty_number
+		fi
 		line_bak=$line
 		echo "----------------------------------------" >$out_tty_number
 	fi
