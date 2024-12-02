@@ -42,7 +42,6 @@ clear >$input_tty_number
 echo "$banner" >$out_tty_number
 echo "按下回车开始使用,输入\q退出并查看结果。" >$out_tty_number
 echo "输入正则表达式，结果将出现在这里。" >$out_tty_number
-temp_file=$(mktemp)
 line_bak=".*"
 
 while IFS= read -r line; do
@@ -67,7 +66,6 @@ while IFS= read -r line; do
 			echo "-----------------" >$input_tty_number
 			grep -Po "$line_bak" "$file_path"
 		fi
-		rm -f $temp_file
 		exit 0
 	fi
 	if [ -z "$(echo "$line" | tr -d '[:space:]')" ]; then
@@ -91,29 +89,19 @@ while IFS= read -r line; do
 		clear >$result_tty_number
 		echo "poc_content:" >$poc_tty_number
 		echo "----------------------------------------" >$poc_tty_number
-		sed -E "s/.*/&/g" "$poc_path" >$poc_tty_number
+		sed -E "$matchword" "$poc_path" 2>/dev/null >$poc_tty_number || { sed -E "s/.*/&/g" "$poc_path" >$poc_tty_number; }
 	fi
 
-	command=$(sed -E "$matchword" "$file_path" 2>&1)
-	err_msg=$command
-	if [ $? -ne 0 ]; then
-		sed -E "$matchword" "$file_path" 2>&1 >$out_tty_number
-		echo "----------------------------------------" >$out_tty_number
-		echo -n "Wrong " >$out_tty_number
-		sed -E "$matchword" "$file_path" 2>&1 | awk -F 'RE' '{print $2}' >$out_tty_number
-		echo "----------------------------------------" >$out_tty_number
-	else
-		echo "----------------------------------------" >$out_tty_number
-		echo "$err_msg" >"$out_tty_number"
-		sed -E "s$i$line$i&${i}g" "$file_path" 2>&1 >$temp_file
-		if [ -f "$poc_path" ]; then
-			echo "output:" >$result_tty_number
-			echo "----------------------------------------" >$result_tty_number
-			grep -Po "$line" "$file_path" 2>&1 >$result_tty_number
-		fi
-		line_bak=$line
-		echo "----------------------------------------" >$out_tty_number
+	command=`sed -E "$matchword" "$file_path" 2>/dev/null || { sed -E "s/.*/&/g" "$file_path"; }`
+	echo "----------------------------------------" >$out_tty_number
+	echo "$command" > "$out_tty_number"
+	if [ -f "$poc_path" ]; then
+		echo "output:" >$result_tty_number
+		echo "----------------------------------------" >$result_tty_number
+		grep -Po "$line" "$file_path" 2>/dev/null >$result_tty_number
 	fi
+	line_bak=$line
+	echo "----------------------------------------" >$out_tty_number
 	((count++))
 	printf "[%s] " $count >$input_tty_number
 done
