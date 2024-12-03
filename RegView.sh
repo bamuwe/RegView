@@ -5,7 +5,7 @@
 # Author: bamuwe
 # Date Created: 2024-12-01
 # Last Modified: 2024-12-02
-# Version: 1.0
+# Version: beat1.1
 # License: MIT License
 # ----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ while IFS= read -r line; do
 	symbols=('/' '#' '@' '%' ':' ';')
 	for i in "${symbols[@]}"; do
 		if [[ ! "$line" =~ "$i" ]]; then
-			matchword="s$i$line$i\x1b[31m&\x1b[0m${i}g"
+			matchword="s$i$line$i\x1b[31m$&\x1b[0m${i}g"
 			break
 		fi
 	done
@@ -89,10 +89,10 @@ while IFS= read -r line; do
 		clear >$result_tty_number
 		echo "poc_content:" >$poc_tty_number
 		echo "----------------------------------------" >$poc_tty_number
-		sed -E "$matchword" "$poc_path" 2>/dev/null >$poc_tty_number || { sed -E "s/.*/&/g" "$poc_path" >$poc_tty_number; }
+		perl -pe "$matchword" "$poc_path" 2>/dev/null >$poc_tty_number || { sed -E "s/.*/&/g" "$poc_path" >$poc_tty_number; }
 	fi
 
-	command=`sed -E "$matchword" "$file_path" 2>/dev/null || { sed -E "s/.*/&/g" "$file_path"; }`
+	command=`perl -pe "$matchword" "$file_path" 2>/dev/null || { sed -E "s/.*/&/g" "$file_path"; }`
 	echo "----------------------------------------" >$out_tty_number
 	echo "$command" > "$out_tty_number"
 	if [ -f "$poc_path" ]; then
