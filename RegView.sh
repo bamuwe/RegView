@@ -93,11 +93,10 @@ while IFS= read -er line; do
 	command=$(perl -pe "$matchword" "$file_path" 2>/dev/null)
 	if [ $? -eq 0 ]; then
 		# 如果 perl 执行成功
-		run_statu=true
-		line_bak=$line
-		if [ ! $count -eq 0 ]; then
+		if [ $count -ne 0 ]; then
 			echo ""
 		fi
+		line_bak=$line
 	else
 		command=$(sed -E "s/.*/&/g" "$file_path")
 		echo "                                   Wrong" >$input_tty_number
