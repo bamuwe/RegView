@@ -15,7 +15,6 @@ banner="
   ) _ < /(__)\  )    (  )(__)(  )    (  )__) 
   (____/(__)(__)(_/\/\_)(______)(__/\__)(____)
   "
-
 file_path=${1}
 poc_path=${2}
 if [ ! -f "$file_path" ]; then
@@ -34,7 +33,6 @@ if [ -f "$poc_path" ]; then
 	tmux select-pane -t 0
 	poc_tty_number=$(tmux list-panes -F "#{pane_id} #{pane_tty}" | tail -n2 | head -n1 | awk '{print $2}')
 	result_tty_number=$(tmux list-panes -F "#{pane_id} #{pane_tty}" | tail -n3 | head -n1 | awk '{print $2}')
-	echo $result_tty_number
 	clear >$poc_tty_number
 fi
 clear >$out_tty_number
@@ -43,8 +41,7 @@ echo "$banner" >$out_tty_number
 echo "按下回车开始使用,输入\q退出并查看结果。" >$out_tty_number
 echo "输入正则表达式，结果将出现在这里。" >$out_tty_number
 line_bak=".*"
-
-while IFS= read -r line; do
+while IFS= read -er line; do
 	if [ $count -eq 0 ]; then
 		echo "history:"
 		echo "----------------------------------------"
@@ -54,7 +51,8 @@ while IFS= read -r line; do
 		if [ -f "$poc_path" ]; then
 			tmux kill-pane -t $(tmux list-panes -F "#{pane_tty} #{pane_id}" | grep "$poc_tty_number" | awk '{print $2}')
 			tmux kill-pane -t $(tmux list-panes -F "#{pane_tty} #{pane_id}" | grep "$result_tty_number" | awk '{print $2}')
-			echo 'bye!'
+			clear
+			echo 'bye!  :@bamuwe'
 			exit 0
 		fi
 		echo 'bye!' >$input_tty_number
@@ -92,16 +90,25 @@ while IFS= read -r line; do
 		perl -pe "$matchword" "$poc_path" 2>/dev/null >$poc_tty_number || { sed -E "s/.*/&/g" "$poc_path" >$poc_tty_number; }
 	fi
 
-	command=`perl -pe "$matchword" "$file_path" 2>/dev/null || { sed -E "s/.*/&/g" "$file_path"; }`
+	command=$(perl -pe "$matchword" "$file_path" 2>/dev/null)
+	if [ $? -eq 0 ]; then
+		# 如果 perl 执行成功
+		run_statu=true
+		line_bak=$line
+		if [ ! $count -eq 0 ]; then
+			echo ""
+		fi
+	else
+		command=$(sed -E "s/.*/&/g" "$file_path")
+		echo "                                   Wrong" >$input_tty_number
+	fi
 	echo "----------------------------------------" >$out_tty_number
-	echo "$command" > "$out_tty_number"
+	echo "$command" >"$out_tty_number"
 	if [ -f "$poc_path" ]; then
 		echo "output:" >$result_tty_number
 		echo "----------------------------------------" >$result_tty_number
 		grep -Po "$line" "$file_path" 2>/dev/null >$result_tty_number
 	fi
-	line_bak=$line
-	echo "----------------------------------------" >$out_tty_number
 	((count++))
-	printf "[%s] " $count >$input_tty_number
+	printf "#%s:\n" $count >$input_tty_number
 done
